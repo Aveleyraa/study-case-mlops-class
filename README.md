@@ -1,2 +1,3 @@
-# study-case-mlops-class
-this is only for study porpuse
+# ML CI/CD Example Project
+
+Pipeline básico de Machine Learning con GitHub Actions.
