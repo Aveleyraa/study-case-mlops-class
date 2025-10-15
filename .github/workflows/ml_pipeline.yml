@@ -24,7 +24,9 @@ jobs:
           pip install pytest
 
       - name: Run tests
-        run: pytest tests/
+        run: |
+          export PYTHONPATH=$PYTHONPATH:$(pwd)
+          pytest tests/
 
       - name: Train model
         run: python src/train.py
