@@ -67,17 +67,23 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: model
+          path: .
 
       - name: Build Docker image
         run: |
           docker build -t ml-model-api .
           docker images
+      - name: Inspect image contents
+        run: |
+          docker run --rm ml-model-api ls -l
+
 
       - name: Run container test
         run: |
-          docker run -d -p 8000:8000 ml-model-api
-          sleep 15
-          curl -f http://localhost:8000/ || exit 1
+          docker run -d -p 8000:8000 --name ml-api-test ml-model-api
+          sleep 10
+          echo "Testing API endpoint..."
+          curl -f http://localhost:8000/ || (echo "❌ API test failed. Container logs:" && docker logs ml-api-test && exit 1)
 
       - name: Stop running containers
         if: always()
