@@ -76,7 +76,7 @@ jobs:
       - name: Run container test
         run: |
           docker run -d -p 8000:8000 ml-model-api
-          sleep 5
+          sleep 15
           curl -f http://localhost:8000/ || exit 1
 
       - name: Stop running containers
