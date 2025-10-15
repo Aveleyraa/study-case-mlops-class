@@ -1,4 +1,4 @@
-name: ML CI/CD Pipeline (multi-job)
+name: ML CI/CD Pipeline (multi-stage)
 
 on:
   push:
@@ -6,6 +6,7 @@ on:
   workflow_dispatch:
 
 jobs:
+  # 🧪 1️⃣ Test del código
   test:
     runs-on: ubuntu-latest
     steps:
@@ -27,10 +28,10 @@ jobs:
           export PYTHONPATH=$PYTHONPATH:$(pwd)
           pytest tests/
 
-
+  # 🧠 2️⃣ Entrenamiento del modelo
   train:
     runs-on: ubuntu-latest
-    needs: test   # 👈 Este job solo se ejecuta si "test" termina con éxito
+    needs: test
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -44,7 +45,9 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: Train model
-        run: python src/train.py
+        run: |
+          export PYTHONPATH=$PYTHONPATH:$(pwd)
+          python src/train.py
 
       - name: Upload trained model
         uses: actions/upload-artifact@v4
@@ -52,10 +55,14 @@ jobs:
           name: model
           path: model.pkl
 
+  # 🚀 3️⃣ Build y prueba del contenedor Docker
   deploy:
     runs-on: ubuntu-latest
-    needs: train  # 👈 Solo se ejecuta si "train" terminó correctamente
+    needs: train
     steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4   # 🔑 Necesario para tener acceso al Dockerfile
+
       - name: Download model artifact
         uses: actions/download-artifact@v4
         with:
@@ -70,4 +77,9 @@ jobs:
         run: |
           docker run -d -p 8000:8000 ml-model-api
           sleep 5
-          curl -f http://localhost:8000/
+          curl -f http://localhost:8000/ || exit 1
+
+      - name: Stop running containers
+        if: always()
+        run: |
+          docker ps -q | xargs -r docker stop
